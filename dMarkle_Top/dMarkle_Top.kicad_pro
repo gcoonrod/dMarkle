@@ -44,7 +44,7 @@
         "silk_text_thickness": 0.15,
         "silk_text_upright": false,
         "zones": {
-          "45_degree_only": false,
+          "45_degree_only": true,
           "min_clearance": 0.508
         }
       },
@@ -348,7 +348,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "dMarkle_Bottom.kicad_pro",
+    "filename": "dMarkle_Top.kicad_pro",
     "version": 1
   },
   "net_settings": {
@@ -427,7 +427,7 @@
   },
   "sheets": [
     [
-      "ad1010af-6a55-4cd4-9d6d-cda084ef70ea",
+      "43d6065b-16a5-4bb3-add2-ba5aad128e7e",
       ""
     ]
   ],
