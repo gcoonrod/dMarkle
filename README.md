@@ -10,6 +10,6 @@
 
 # dMarkle
 
-![3D View](./dMarkle_rev0.png)
+![3D View](./dMarkle_rev0.1.png)
 
 A Raspberry Pi Pico based dice rolling toy.
