@@ -8,6 +8,7 @@
 
 from machine import Pin
 import time
+import random
 
 NUMBERS = {
     0: dict(d3=0, d2=0, d1=0, d0=0, LE=0, BL=1, LT=1),
@@ -21,6 +22,23 @@ NUMBERS = {
     8: dict(d3=1, d2=0, d1=0, d0=0, LE=0, BL=1, LT=1),
     9: dict(d3=1, d2=0, d1=0, d0=1, LE=0, BL=1, LT=1),
 }
+
+DICE = {
+    'd4': dict(value=4, bits=3),
+    'd6': dict(value=6, bits=3),
+    'd8': dict(value=8, bits=4),
+    'd10': dict(value=10, bits=4),
+    'd12': dict(value=12, bits=4),
+    'd20': dict(value=20, bits=5),
+    'd100': dict(value=100, bits=7)
+}
+
+DICE_LIST = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100']
+
+
+class Direction:
+    LEFT = 0
+    RIGHT = 1
 
 
 class Digit:
@@ -89,15 +107,88 @@ class Display:
         print('Oops')
 
 
+class RotaryEncoder:
+
+    def __init__(self, clk_pin, dt_pin, btn_pin):
+        self.clk = Pin(clk_pin, Pin.IN)
+        self.dt = Pin(dt_pin, Pin.IN)
+
+        # Active Low Button
+        self.btn = Pin(btn_pin, Pin.IN)
+
+        self.press_handler = None
+        self.turn_handler = None
+
+        self.clk.irq(self.__clk_irq_handler, Pin.IRQ_FALLING)
+        self.btn.irq(self.__btn_irq_handler, Pin.IRQ_FALLING)
+
+    def register_press_handler(self, handler_func):
+        self.press_handler = handler_func
+
+    def register_turn_handler(self, handler_func):
+        self.turn_handler = handler_func
+
+    def __clk_irq_handler(self, pin):
+        dt_value = self.dt.value()
+        #print('IRQ: dt={}'.format(dt_value))
+        if dt_value == 0:
+            if self.turn_handler != None:
+                self.turn_handler(Direction.LEFT)
+        else:
+            if self.turn_handler != None:
+                self.turn_handler(Direction.RIGHT)
+
+    def __btn_irq_handler(self, pin):
+        if self.press_handler != None:
+            self.press_handler()
+
+
+class Program:
+
+    def __init__(self):
+        self.display = Display()
+        self.encoder = RotaryEncoder(clk_pin=20, dt_pin=19, btn_pin=18)
+        self.encoder.register_press_handler(self.handle_press)
+        self.encoder.register_turn_handler(self.handle_turn)
+        self.current_die_idx = 0
+        self.current_die = DICE[DICE_LIST[self.current_die_idx]]
+        self.display.display_number(self.current_die['value'])
+
+    def roll_dice(self):
+        max_value = self.current_die['value']
+        bits = self.current_die['bits']
+
+        result = random.getrandbits(bits)
+        while result == 0 or result > max_value:
+            result = random.getrandbits(bits)
+
+        return result
+
+    def handle_turn(self, direction: Direction):
+        if direction == Direction.LEFT:
+            if self.current_die_idx == 0:
+                self.current_die_idx = 6
+            else:
+                self.current_die_idx -= 1
+        elif direction == Direction.RIGHT:
+            if self.current_die_idx == 6:
+                self.current_die_idx = 0
+            else:
+                self.current_die_idx += 1
+        else:
+            print('WTF')
+
+        self.current_die = DICE[DICE_LIST[self.current_die_idx]]
+        num_to_display = self.current_die['value']
+        self.display.display_number(num_to_display)
+        print('Current Die: {}'.format(self.current_die['value']))
+
+    def handle_press(self):
+        roll = self.roll_dice()
+        print('{} rolled a {}'.format(DICE_LIST[self.current_die_idx], roll))
+        self.display.display_number(roll)
+
+
 # Main
-
-display = Display()
-
-num_to_show = 0
-while True:
-    display.display_number(num_to_show)
-    time.sleep_ms(10)
-    if num_to_show < 999:
-        num_to_show += 1
-    else:
-        num_to_show = 0
+random.seed(None)
+program = Program()
