@@ -44,7 +44,7 @@
         "silk_text_thickness": 0.15,
         "silk_text_upright": false,
         "zones": {
-          "45_degree_only": true,
+          "45_degree_only": false,
           "min_clearance": 0.508
         }
       },
@@ -56,15 +56,22 @@
         }
       ],
       "drc_exclusions": [
+        "courtyards_overlap|103320729|104360001|7343c047-d671-4309-96f1-7b38132c5308|c14ec8bd-86da-4765-b7c0-8278e4f41aca",
         "courtyards_overlap|103320729|104360001|c14ec8bd-86da-4765-b7c0-8278e4f41aca|7343c047-d671-4309-96f1-7b38132c5308",
+        "courtyards_overlap|104868001|107212001|77d0fee8-f5d9-4114-b55e-60ab2e55796f|c14ec8bd-86da-4765-b7c0-8278e4f41aca",
+        "courtyards_overlap|104888001|103910001|8d08401e-9d08-4444-aa16-bf7dcfb07506|c14ec8bd-86da-4765-b7c0-8278e4f41aca",
         "courtyards_overlap|104888001|103910001|c14ec8bd-86da-4765-b7c0-8278e4f41aca|dc1241a1-cd1e-4cdc-9d4d-a2ef5e4d0820",
         "courtyards_overlap|104888001|107212001|c14ec8bd-86da-4765-b7c0-8278e4f41aca|26f6177e-2e5d-46e2-8e69-095ff92623dc",
+        "courtyards_overlap|106238001|111472001|339f8f77-1fc6-4a3c-81f4-51e229657adf|c14ec8bd-86da-4765-b7c0-8278e4f41aca",
         "courtyards_overlap|106238001|111472001|c14ec8bd-86da-4765-b7c0-8278e4f41aca|e5169722-456b-447f-9975-04b984a2ecbf",
         "courtyards_overlap|106238001|114012001|c14ec8bd-86da-4765-b7c0-8278e4f41aca|339f8f77-1fc6-4a3c-81f4-51e229657adf",
+        "courtyards_overlap|106238001|114012001|c14ec8bd-86da-4765-b7c0-8278e4f41aca|e5169722-456b-447f-9975-04b984a2ecbf",
         "courtyards_overlap|115026001|104310001|d931d048-5978-4234-a6da-c4c6b6e46c7e|c14ec8bd-86da-4765-b7c0-8278e4f41aca",
         "courtyards_overlap|133628001|104400001|c14ec8bd-86da-4765-b7c0-8278e4f41aca|8d08401e-9d08-4444-aa16-bf7dcfb07506",
         "courtyards_overlap|133628001|109460001|77d0fee8-f5d9-4114-b55e-60ab2e55796f|c14ec8bd-86da-4765-b7c0-8278e4f41aca",
+        "courtyards_overlap|97348001|101820001|c14ec8bd-86da-4765-b7c0-8278e4f41aca|d22bd26f-104e-46c5-a7dc-9155f133c6c1",
         "courtyards_overlap|97348001|101820001|d22bd26f-104e-46c5-a7dc-9155f133c6c1|c14ec8bd-86da-4765-b7c0-8278e4f41aca",
+        "courtyards_overlap|97348001|107662001|18844ae7-b1ca-4e12-b8c7-cd51062f379f|c14ec8bd-86da-4765-b7c0-8278e4f41aca",
         "courtyards_overlap|97348001|107662001|c14ec8bd-86da-4765-b7c0-8278e4f41aca|18844ae7-b1ca-4e12-b8c7-cd51062f379f"
       ],
       "meta": {
