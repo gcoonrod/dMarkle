@@ -9,9 +9,16 @@
 from machine import Pin
 import time
 
+DEBUG_FLAG = False
+
 
 def delay():
-    time.sleep_us(1)
+    time.sleep_us(10)
+
+
+def debug(message: str):
+    if DEBUG_FLAG:
+        print(message)
 
 
 class TM1620:
@@ -41,7 +48,7 @@ class TM1620:
     }
 
     FONT_ASCII = {
-        ' ': 0b00000000,  # (32)  <space>
+        ' ': 0b00000000,  # (32) 	<space>
         '!': 0b10000110,  # (33)	!
         '"': 0b00100010,  # (34)	"
         '#': 0b01111110,  # (35)	#
@@ -148,9 +155,9 @@ class TM1620:
 
     def initialize_display(self, num_digits: int, active: bool,
                            intensity: int) -> None:
-
         self.digits = num_digits
         if num_digits <= 4:
+            debug("Setting display to <=4 digits")
             self.send_command(0x00)
         elif num_digits == 5:
             self.send_command(0x01)
@@ -162,13 +169,16 @@ class TM1620:
 
     def send_command(self, command: int) -> None:
         self.__start()
+        print("Sending Command: {0:08b}".format(command))
         self.__send_byte(command)
         self.__end()
 
     def send_data(self, address: int, data: int) -> None:
         self.send_command(TM1620.CMD_DATA_FIXED)
         self.__start()
+        print("Sending data to: {0:08b}".format(TM1620.CMD_ADDRESS | address))
         self.__send_byte(TM1620.CMD_ADDRESS | address)
+        print("Sending data: {0:08b}".format(data))
         self.__send_byte(data)
         self.__end()
 
@@ -243,6 +253,7 @@ class TM1620:
         for _ in range(8):
             self.clkPin.value(0)
             delay()
+            debug("Sending bit: {0:b}".format(byte & 1))
             self.dinPin.value(1 if byte & 1 else 0)
             delay()
             byte = byte >> 1

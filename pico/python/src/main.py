@@ -10,6 +10,8 @@ from machine import Pin
 import time
 import random
 
+from Driver74HC4511 import CD74HC4511, Signals
+
 NUMBERS = {
     0: dict(d3=0, d2=0, d1=0, d0=0, LE=0, BL=1, LT=1),
     1: dict(d3=0, d2=0, d1=0, d0=1, LE=0, BL=1, LT=1),
@@ -40,38 +42,36 @@ class Direction:
     LEFT = 0
     RIGHT = 1
 
-
 class Digit:
 
-    def __init__(self, pins):
-        self.d3 = Pin(pins['d3'], Pin.OUT, value=0)
-        self.d2 = Pin(pins['d2'], Pin.OUT, value=0)
-        self.d1 = Pin(pins['d1'], Pin.OUT, value=0)
-        self.d0 = Pin(pins['d0'], Pin.OUT, value=0)
-        self.blank = Pin(pins['BL'], Pin.OUT, value=0)
-        self.latch = Pin(pins['LE'], Pin.OUT, value=1)
+    def __init__(self, signals: Signals):
+        self.signal_pins = dict(
+            d0 = Pin(signals.d0, Pin.OUT),
+            d1 = Pin(signals.d1, Pin.OUT),
+            d2 = Pin(signals.d2, Pin.OUT),
+            d3 = Pin(signals.d3, Pin.OUT),
+            lamp_test = Pin(signals.lamp_test, Pin.OUT),
+            blank = Pin(signals.blank, Pin.OUT),
+            latch_enable = Pin(signals.latch_enable, Pin.OUT)
+        )
+        self.driver = CD74HC4511(
+            bcd_input = list(
+                self.signal_pins['d3'],
+                self.signal_pins['d2'],
+                self.signal_pins['d1'],
+                self.signal_pins['d0']
+            ),
+            lamp_test = self.signal_pins['lamp_test'],
+            blank = self.signal_pins['blank'],
+            latch_enable = self.signal_pins['latch_enable']
+        )
+        
 
     def set_value(self, value, blank=False):
-        if blank:
-            self.blank.off()
-        else:
-            self.blank.on()
-            lookup = NUMBERS[value]
-            self.d0.value(lookup['d0'])
-            self.d1.value(lookup['d1'])
-            self.d2.value(lookup['d2'])
-            self.d3.value(lookup['d3'])
-            time.sleep_us(50)
-            self.latch.off()
-            time.sleep_us(50)
-            self.latch.on()
-            time.sleep_us(50)
+        
 
     def set_blank(self, value=True):
-        if value:
-            self.blank.off()
-        else:
-            self.blank.on()
+        
 
 
 class Display:
