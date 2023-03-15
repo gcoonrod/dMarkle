@@ -12,19 +12,6 @@ import random
 
 from Driver74HC4511 import CD74HC4511, Signals
 
-NUMBERS = {
-    0: dict(d3=0, d2=0, d1=0, d0=0, LE=0, BL=1, LT=1),
-    1: dict(d3=0, d2=0, d1=0, d0=1, LE=0, BL=1, LT=1),
-    2: dict(d3=0, d2=0, d1=1, d0=0, LE=0, BL=1, LT=1),
-    3: dict(d3=0, d2=0, d1=1, d0=1, LE=0, BL=1, LT=1),
-    4: dict(d3=0, d2=1, d1=0, d0=0, LE=0, BL=1, LT=1),
-    5: dict(d3=0, d2=1, d1=0, d0=1, LE=0, BL=1, LT=1),
-    6: dict(d3=0, d2=1, d1=1, d0=0, LE=0, BL=1, LT=1),
-    7: dict(d3=0, d2=1, d1=1, d0=1, LE=0, BL=1, LT=1),
-    8: dict(d3=1, d2=0, d1=0, d0=0, LE=0, BL=1, LT=1),
-    9: dict(d3=1, d2=0, d1=0, d0=1, LE=0, BL=1, LT=1),
-}
-
 DICE = {
     'd4': dict(value=4, bits=3),
     'd6': dict(value=6, bits=3),
@@ -55,36 +42,38 @@ class Digit:
             latch_enable = Pin(signals.latch_enable, Pin.OUT)
         )
         self.driver = CD74HC4511(
-            bcd_input = list(
+            bcd_input = [
                 self.signal_pins['d3'],
                 self.signal_pins['d2'],
                 self.signal_pins['d1'],
                 self.signal_pins['d0']
-            ),
+            ],
             lamp_test = self.signal_pins['lamp_test'],
             blank = self.signal_pins['blank'],
             latch_enable = self.signal_pins['latch_enable']
         )
         
 
-    def set_value(self, value, blank=False):
-        
+    def set_value(self, value: int, blank=False):
+        self.driver.set_bcd(value)
 
     def set_blank(self, value=True):
-        
+        self.driver.blank_output(value)
 
 
 class Display:
 
     def __init__(self):
-        self.ones_digit = Digit(dict(d3=3, d2=2, d1=1, d0=0, LE=9, BL=6))
-        self.tens_digit = Digit(dict(d3=3, d2=2, d1=1, d0=0, LE=8, BL=5))
-        self.hundreds_digit = Digit(dict(d3=3, d2=2, d1=1, d0=0, LE=7, BL=4))
+        self.current_value = 0
+        self.ones_digit = Digit(Signals(0, 1, 2, 3, -1, 6, 9))
+        self.tens_digit = Digit(Signals(0, 1, 2, 3, -1, 8, 5))
+        self.hundreds_digit = Digit(Signals(0, 1, 2, 3, -1, 7, 4))
 
     def display_number(self, value):
         if value > 999 or value < 0:
             self.show_error()
         else:
+            self.current_value = value
             digits = list(str(value))
             digits.reverse()
             num_digits = len(digits)
@@ -102,16 +91,49 @@ class Display:
                 self.hundreds_digit.set_value(int(digits[2]))
             else:
                 self.hundreds_digit.set_blank()
+                
+    def blink_display(self):
+        for _ in range(2):
+            self.ones_digit.set_blank()
+            self.tens_digit.set_blank()
+            self.hundreds_digit.set_blank()
+            time.sleep_ms(10)
+            self.ones_digit.set_blank(False)
+            self.tens_digit.set_blank(False)
+            self.hundreds_digit.set_blank(False)
+            time.sleep_ms(10)
 
     def show_error(self):
         print('Oops')
+        
+    def animate_roll(self, sleep_time = 100, iterations = 5):
+        # Blank everything first
+        self.ones_digit.set_blank()
+        self.tens_digit.set_blank()
+        self.hundreds_digit.set_blank()
+        
+        for _ in range(iterations):
+            self.hundreds_digit.set_value(0)
+            time.sleep_ms(sleep_time)
+            self.hundreds_digit.set_blank()
+            self.tens_digit.set_value(0)
+            time.sleep_ms(sleep_time)
+            self.tens_digit.set_blank()
+            self.ones_digit.set_value(0)
+            time.sleep_ms(sleep_time)
+            self.ones_digit.set_blank()    
+            
 
 
 class RotaryEncoder:
+    THRESHOLD = 2
 
     def __init__(self, clk_pin, dt_pin, btn_pin):
         self.clk = Pin(clk_pin, Pin.IN)
         self.dt = Pin(dt_pin, Pin.IN)
+        
+        self.dt_prev_val = 0
+        self.clicks = 0
 
         # Active Low Button
         self.btn = Pin(btn_pin, Pin.IN)
@@ -129,14 +151,24 @@ class RotaryEncoder:
         self.turn_handler = handler_func
 
     def __clk_irq_handler(self, pin):
+        if self.turn_handler is None:
+            return
+        
         dt_value = self.dt.value()
-        #print('IRQ: dt={}'.format(dt_value))
-        if dt_value == 0:
-            if self.turn_handler != None:
-                self.turn_handler(Direction.LEFT)
+        turn_direction = None
+        
+        if dt_value == self.dt_prev_val:
+            if self.clicks > RotaryEncoder.THRESHOLD:
+                self.clicks = 0
+                turn_direction = Direction.LEFT if dt_value == 0 else Direction.RIGHT
+            else:
+                self.clicks += 1
         else:
-            if self.turn_handler != None:
-                self.turn_handler(Direction.RIGHT)
+            self.clicks = 0
+        
+        if turn_direction is not None:
+            self.turn_handler(turn_direction) 
+        #print('IRQ: dt={}'.format(dt_value))
 
     def __btn_irq_handler(self, pin):
         if self.press_handler != None:
@@ -181,11 +213,13 @@ class Program:
         self.current_die = DICE[DICE_LIST[self.current_die_idx]]
         num_to_display = self.current_die['value']
         self.display.display_number(num_to_display)
+        self.display.blink_display()
         print('Current Die: {}'.format(self.current_die['value']))
 
     def handle_press(self):
         roll = self.roll_dice()
         print('{} rolled a {}'.format(DICE_LIST[self.current_die_idx], roll))
+        self.display.animate_roll()
         self.display.display_number(roll)
 
 
